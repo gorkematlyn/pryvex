@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+:root {
+  /* Pryvex brand system */
+  --pryvex-shadow: #0c0d11;
+  --pryvex-shadow-raised: #131419;
+  --pryvex-shadow-elevated: #191a21;
+  --pryvex-border: #24262f;
+  --pryvex-border-soft: #1a1c24;
+  --pryvex-alloy: #d7dce4;
+  --pryvex-alloy-dim: #8b93a3;
+  --pryvex-alloy-faint: #565b68;
+  --pryvex-electric: #64a0ff;
+  --pryvex-ultraviolet: #b998ff;
+
+  --background: var(--pryvex-shadow);
+  --foreground: var(--pryvex-alloy);
+}
+
+@theme inline {
+  --color-shadow: var(--pryvex-shadow);
+  --color-shadow-raised: var(--pryvex-shadow-raised);
+  --color-shadow-elevated: var(--pryvex-shadow-elevated);
+  --color-border: var(--pryvex-border);
+  --color-border-soft: var(--pryvex-border-soft);
+  --color-alloy: var(--pryvex-alloy);
+  --color-alloy-dim: var(--pryvex-alloy-dim);
+  --color-alloy-faint: var(--pryvex-alloy-faint);
+  --color-electric: var(--pryvex-electric);
+  --color-ultraviolet: var(--pryvex-ultraviolet);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--pryvex-border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.glass-panel {
+  background: linear-gradient(180deg, rgba(215, 220, 228, 0.05), rgba(215, 220, 228, 0.02));
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--pryvex-border);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--pryvex-electric), var(--pryvex-ultraviolet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.glow-electric {
+  box-shadow: 0 0 0 1px rgba(100, 160, 255, 0.4), 0 0 24px rgba(100, 160, 255, 0.25);
+}
+
+::selection {
+  background: var(--pryvex-ultraviolet);
+  color: var(--pryvex-shadow);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pryvex-border);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pryvex-alloy-faint);
+}

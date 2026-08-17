@@ -1,0 +1,40 @@
+# For local testing of the production Docker image before deploying to
+# Dokploy. On Dokploy itself, Postgres is typically its own managed
+# service and only the app is deployed from this Dockerfile — this
+# compose file is a convenience, not what Dokploy runs directly.
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pryvex
+      POSTGRES_PASSWORD: pryvex
+      POSTGRES_DB: pryvex
+    ports:
+      - "5432:5432"
+    volumes:
+      - pryvex_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pryvex"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://pryvex:pryvex@db:5432/pryvex
+      AUTH_SECRET: local-dev-secret-change-me
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pryvex_db_data:
