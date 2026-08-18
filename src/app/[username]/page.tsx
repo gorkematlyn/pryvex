@@ -106,12 +106,18 @@ export default async function PublicProfilePage({
   );
 
   return (
-    <main className="mx-auto min-h-screen max-w-md bg-shadow">
-      <ProfilePreview
-        profile={profile}
-        links={links}
-        linkHrefFor={(link) => `/go/${link.id}`}
-      />
+    // force-dark on the full-bleed outer element, not just the centered
+    // column — otherwise the empty margin on wide viewports would fall back
+    // to <body>'s theme (which does follow the visitor's preference),
+    // producing a light seam around an otherwise-dark card.
+    <main className="force-dark min-h-screen bg-shadow">
+      <div className="mx-auto max-w-md">
+        <ProfilePreview
+          profile={profile}
+          links={links}
+          linkHrefFor={(link) => `/go/${link.id}`}
+        />
+      </div>
     </main>
   );
 }

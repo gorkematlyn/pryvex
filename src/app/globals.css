@@ -1,7 +1,15 @@
 @import "tailwindcss";
 
+/*
+ * Pryvex is a dark-first product — Shadow Black is the primary identity —
+ * so the unconditional `:root` block below stays the default. Light mode
+ * is opt-in: either the OS prefers light and the visitor hasn't explicitly
+ * chosen dark (`prefers-color-scheme`), or `data-theme="light"` is set
+ * directly by the toggle (see ThemeToggle / theme-script). An explicit
+ * `data-theme` always wins over the OS preference in either direction.
+ */
 :root {
-  /* Pryvex brand system */
+  /* Pryvex brand system — dark (default) */
   --pryvex-shadow: #0c0d11;
   --pryvex-shadow-raised: #131419;
   --pryvex-shadow-elevated: #191a21;
@@ -12,9 +20,51 @@
   --pryvex-alloy-faint: #565b68;
   --pryvex-electric: #64a0ff;
   --pryvex-ultraviolet: #b998ff;
+  --pryvex-selection: var(--pryvex-ultraviolet);
+  --pryvex-selection-fg: var(--pryvex-shadow);
+  --pryvex-glass: rgba(215, 220, 228, 0.05);
+  --pryvex-glass-soft: rgba(215, 220, 228, 0.02);
 
   --background: var(--pryvex-shadow);
   --foreground: var(--pryvex-alloy);
+}
+
+/* System preference, only when the visitor hasn't explicitly chosen dark. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --pryvex-shadow: #f6f7f9;
+    --pryvex-shadow-raised: #ffffff;
+    --pryvex-shadow-elevated: #ffffff;
+    --pryvex-border: #e1e4ea;
+    --pryvex-border-soft: #ebedf1;
+    --pryvex-alloy: #14161c;
+    --pryvex-alloy-dim: #565d6d;
+    --pryvex-alloy-faint: #8991a1;
+    --pryvex-electric: #2f6fe0;
+    --pryvex-ultraviolet: #7c3aed;
+    --pryvex-selection: #c9b3ff;
+    --pryvex-selection-fg: #14161c;
+    --pryvex-glass: rgba(20, 22, 28, 0.03);
+    --pryvex-glass-soft: rgba(20, 22, 28, 0.01);
+  }
+}
+
+/* Explicit choice from the theme toggle — always wins over the OS. */
+:root[data-theme="light"] {
+  --pryvex-shadow: #f6f7f9;
+  --pryvex-shadow-raised: #ffffff;
+  --pryvex-shadow-elevated: #ffffff;
+  --pryvex-border: #e1e4ea;
+  --pryvex-border-soft: #ebedf1;
+  --pryvex-alloy: #14161c;
+  --pryvex-alloy-dim: #565d6d;
+  --pryvex-alloy-faint: #8991a1;
+  --pryvex-electric: #2f6fe0;
+  --pryvex-ultraviolet: #7c3aed;
+  --pryvex-selection: #c9b3ff;
+  --pryvex-selection-fg: #14161c;
+  --pryvex-glass: rgba(20, 22, 28, 0.03);
+  --pryvex-glass-soft: rgba(20, 22, 28, 0.01);
 }
 
 @theme inline {
@@ -44,6 +94,20 @@ body {
   font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* Lets native controls (scrollbars, checkboxes, date pickers) render in the
+   matching palette instead of always assuming a dark page. */
+:root {
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -53,8 +117,35 @@ body {
   }
 }
 
+/*
+ * The public bio page is the creator's branded presentation, not app UI —
+ * it must render identically for every visitor regardless of their OS
+ * preference or (since localStorage is same-origin) whatever the profile
+ * owner last set the dashboard's own toggle to. Re-declaring the dark
+ * tokens here, scoped to this class, overrides whatever `:root` resolved
+ * to for every `--pryvex-*` reference inside it — including all the
+ * existing `bg-shadow` / `text-alloy` utility classes, unchanged.
+ */
+.force-dark {
+  --pryvex-shadow: #0c0d11;
+  --pryvex-shadow-raised: #131419;
+  --pryvex-shadow-elevated: #191a21;
+  --pryvex-border: #24262f;
+  --pryvex-border-soft: #1a1c24;
+  --pryvex-alloy: #d7dce4;
+  --pryvex-alloy-dim: #8b93a3;
+  --pryvex-alloy-faint: #565b68;
+  --pryvex-electric: #64a0ff;
+  --pryvex-ultraviolet: #b998ff;
+  --pryvex-selection: var(--pryvex-ultraviolet);
+  --pryvex-selection-fg: var(--pryvex-shadow);
+  --pryvex-glass: rgba(215, 220, 228, 0.05);
+  --pryvex-glass-soft: rgba(215, 220, 228, 0.02);
+  color-scheme: dark;
+}
+
 .glass-panel {
-  background: linear-gradient(180deg, rgba(215, 220, 228, 0.05), rgba(215, 220, 228, 0.02));
+  background: linear-gradient(180deg, var(--pryvex-glass), var(--pryvex-glass-soft));
   backdrop-filter: blur(20px);
   border: 1px solid var(--pryvex-border);
 }
@@ -71,8 +162,8 @@ body {
 }
 
 ::selection {
-  background: var(--pryvex-ultraviolet);
-  color: var(--pryvex-shadow);
+  background: var(--pryvex-selection);
+  color: var(--pryvex-selection-fg);
 }
 
 ::-webkit-scrollbar {

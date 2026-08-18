@@ -47,7 +47,11 @@ COPY --from=builder /app/scripts ./scripts
 USER nextjs
 EXPOSE 3000
 
-# `db:migrate` (scripts/migrate.mjs) is idempotent — run it once against
-# DATABASE_URL before or after the first deploy, e.g. via `docker exec`
-# or a Dokploy pre-deploy command: `node scripts/migrate.mjs`.
-CMD ["node", "server.js"]
+# Migrations run automatically on every container start, before the server
+# takes traffic. scripts/migrate.mjs is idempotent (tracks applied files in
+# a _migrations table), so this is a no-op on restarts and safe to run every
+# deploy — a fresh migration file is the only time it does real work. If it
+# fails (e.g. the database is unreachable), `&&` stops the server from
+# starting on a broken schema; `exec` hands over PID 1 so Docker's stop
+# signal still reaches server.js directly for a clean shutdown.
+CMD ["sh", "-c", "node scripts/migrate.mjs && exec node server.js"]

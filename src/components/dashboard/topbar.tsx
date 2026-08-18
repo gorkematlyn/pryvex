@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 export function Topbar({
   username,
@@ -62,6 +63,8 @@ export function Topbar({
           </span>
         )}
       </Link>
+
+      <ThemeToggle />
 
       {isAdmin && (
         <Link href="/admin">
