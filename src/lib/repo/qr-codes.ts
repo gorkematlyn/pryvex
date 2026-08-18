@@ -29,3 +29,12 @@ export async function createQrCode(input: {
 export async function deleteQrCode(id: string, profileId: string): Promise<void> {
   await query("delete from qr_codes where id = $1 and profile_id = $2", [id, profileId]);
 }
+
+/** Used by plan-limit checks before creating another QR code. */
+export async function countQrCodesForProfile(profileId: string): Promise<number> {
+  const row = await queryOne<{ count: string }>(
+    "select count(*)::text as count from qr_codes where profile_id = $1",
+    [profileId],
+  );
+  return Number(row?.count ?? 0);
+}

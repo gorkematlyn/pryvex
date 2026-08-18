@@ -2,11 +2,14 @@ export type EventType = "profile_view" | "link_click" | "short_link_click" | "qr
 export type TrafficSource = "bio_page" | "short_link" | "qr_code" | "direct";
 export type QrTargetType = "profile" | "link" | "short_link" | "custom";
 
+export type UserRole = "user" | "admin" | "super_admin";
+
 export interface UserRow {
   id: string;
   email: string;
   password_hash: string;
   email_verified_at: string | null;
+  role: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +117,123 @@ export interface UserSettingsRow {
   default_utm_source: string;
   default_utm_medium: string;
   auto_utm_enabled: boolean;
+  search_engine_visible: boolean;
+  llm_visible: boolean;
+  google_analytics_id: string | null;
+  meta_pixel_id: string | null;
+  meta_conversion_api_token: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ---------------------------------------------------------
+// Plans, subscriptions, billing
+// ---------------------------------------------------------
+
+export type BillingPeriod = "free" | "monthly" | "yearly" | "lifetime";
+export type SubscriptionStatus = "active" | "expired" | "cancelled";
+export type SubscriptionSource = "signup" | "admin" | "payment";
+export type PaymentProvider = "paytr" | "paypal" | "stripe" | "manual";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
+export interface PlanRow {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price_amount: number;
+  price_currency: string;
+  billing_period: BillingPeriod;
+  duration_days: number | null;
+  features: Record<string, boolean>;
+  limits: Record<string, number>;
+  is_active: boolean;
+  is_public: boolean;
+  is_system: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionRow {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  status: SubscriptionStatus;
+  started_at: string;
+  expires_at: string | null;
+  source: SubscriptionSource;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentRow {
+  id: string;
+  user_id: string | null;
+  plan_id: string | null;
+  provider: PaymentProvider;
+  provider_ref: string | null;
+  merchant_oid: string | null;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  raw: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------------------------------------------------------
+// Notifications, support, admin
+// ---------------------------------------------------------
+
+export type NotificationLevel = "info" | "success" | "warning" | "critical";
+export type TicketStatus = "open" | "pending" | "resolved" | "closed";
+export type TicketPriority = "low" | "normal" | "high";
+
+export interface NotificationRow {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string;
+  level: NotificationLevel;
+  action_url: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface SupportTicketRow {
+  id: string;
+  user_id: string;
+  subject: string;
+  status: TicketStatus;
+  priority: TicketPriority;
+  last_message_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TicketMessageRow {
+  id: string;
+  ticket_id: string;
+  author_user_id: string | null;
+  is_staff: boolean;
+  body: string;
+  created_at: string;
+}
+
+export interface AppSettingRow {
+  key: string;
+  value: Record<string, unknown>;
+  updated_at: string;
+}
+
+export interface AdminAuditLogRow {
+  id: string;
+  actor_user_id: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
 }

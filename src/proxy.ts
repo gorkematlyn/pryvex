@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth/session";
 
-const PROTECTED_PREFIXES = ["/dashboard"];
+// Edge can verify the session cookie but cannot read the database, so it
+// only checks "is signed in" for /admin. The role check itself happens in
+// the /admin layout via requireAdmin(), which does hit the database.
+const PROTECTED_PREFIXES = ["/dashboard", "/admin"];
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;

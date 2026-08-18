@@ -4,9 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { customAlphabet } from "nanoid";
 import { requireProfile } from "@/lib/domain/current-user";
+import type { ActionResult } from "@/app/dashboard/actions";
+import type { QrCodeRow } from "@/lib/db/types";
+import { getEntitlements, requireFeature, requireLimit } from "@/lib/domain/entitlements";
 import { isValidDestinationUrl } from "@/lib/domain/url";
 import { createShortLink } from "@/lib/repo/short-links";
-import { createQrCode as createQrCodeRepo, deleteQrCode as deleteQrCodeRepo } from "@/lib/repo/qr-codes";
+import { createQrCode as createQrCodeRepo, deleteQrCode as deleteQrCodeRepo, countQrCodesForProfile } from "@/lib/repo/qr-codes";
 
 const nanoSlug = customAlphabet("23456789abcdefghijkmnpqrstuvwxyz", 7);
 
@@ -18,10 +21,21 @@ const schema = z.object({
   label: z.string().max(80).optional(),
 });
 
-export async function createQrCode(input: unknown) {
+export async function createQrCode(input: unknown): Promise<ActionResult<QrCodeRow>> {
   const { userId } = await requireProfile();
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const [entitlements, used] = await Promise.all([
+    getEntitlements(userId),
+    countQrCodesForProfile(userId),
+  ]);
+
+  const denied = requireFeature(entitlements, "qr_codes");
+  if (denied) return denied;
+
+  const overLimit = requireLimit(entitlements, "max_qr_codes", used, "QR codes");
+  if (overLimit) return overLimit;
 
   let targetShortLinkId = parsed.data.target_short_link_id ?? null;
 

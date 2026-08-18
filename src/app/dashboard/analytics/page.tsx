@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { requireProfile } from "@/lib/domain/current-user";
+import { getEntitlements } from "@/lib/domain/entitlements";
+import { LockedFeature } from "@/components/ui/locked-feature";
 import { listEventsForProfileInRange } from "@/lib/repo/link-events";
-import { resolveDateRange, summarizeEvents, type DateRangeKey } from "@/lib/domain/analytics";
+import { resolveDateRange, summarizeEvents, clampRangeToRetention, type DateRangeKey } from "@/lib/domain/analytics";
 import { StatTile } from "@/components/analytics/stat-tile";
 import { TimeSeriesChart } from "@/components/analytics/time-series-chart";
 import { BreakdownList } from "@/components/analytics/breakdown-list";
@@ -18,7 +21,15 @@ export default async function AnalyticsPage({
   const { userId } = await requireProfile();
   const { range: rawRange } = await searchParams;
   const range = (["today", "7d", "30d", "90d"].includes(rawRange ?? "") ? rawRange : "7d") as DateRangeKey;
-  const { from, to, label } = resolveDateRange(range);
+  const { from: requestedFrom, to, label } = resolveDateRange(range);
+
+  const entitlements = await getEntitlements(userId);
+
+  // Retention is a plan limit, so the window is clamped before the query
+  // rather than after — a shorter plan simply cannot read older rows, even
+  // by editing ?range= in the URL.
+  const retentionDays = entitlements.limits.analytics_retention_days;
+  const { from, clamped } = clampRangeToRetention(requestedFrom, retentionDays);
 
   const events = await listEventsForProfileInRange(userId, from, to);
   const summary = summarizeEvents(events, from, to);
@@ -39,6 +50,17 @@ export default async function AnalyticsPage({
         </div>
         <DateRangeTabs active={range} />
       </div>
+
+      {clamped && (
+        <Card className="mb-6 flex flex-wrap items-center justify-between gap-3 border-ultraviolet/25 bg-ultraviolet/[0.06] p-4">
+          <p className="text-sm text-alloy-dim">
+            Your plan keeps {retentionDays} days of analytics — this view starts there.
+          </p>
+          <Link href="/dashboard/billing" className="text-sm text-electric hover:underline">
+            Extend retention →
+          </Link>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatTile label="Profile views" value={summary.totalViews} sublabel={`${summary.uniqueViews} unique`} />
@@ -82,16 +104,22 @@ export default async function AnalyticsPage({
             { key: "QR code", count: summary.qrTraffic },
             { key: "Direct", count: summary.directTraffic },
           ].filter((i) => i.count > 0)} />
-          <BreakdownList title="Referrers" items={summary.referrers} />
+          <LockedFeature locked={!entitlements.features.analytics_referrers} label="Referrer reporting">
+            <BreakdownList title="Referrers" items={summary.referrers} />
+          </LockedFeature>
         </Card>
 
-        <Card className="p-5">
-          <BreakdownList title="Device" items={summary.devices} />
-        </Card>
-        <Card className="space-y-6 p-5">
-          <BreakdownList title="Browser" items={summary.browsers} />
-          <BreakdownList title="OS" items={summary.os} />
-        </Card>
+        <LockedFeature locked={!entitlements.features.analytics_breakdowns} label="Device breakdown">
+          <Card className="p-5">
+            <BreakdownList title="Device" items={summary.devices} />
+          </Card>
+        </LockedFeature>
+        <LockedFeature locked={!entitlements.features.analytics_breakdowns} label="Browser and OS breakdown">
+          <Card className="space-y-6 p-5">
+            <BreakdownList title="Browser" items={summary.browsers} />
+            <BreakdownList title="OS" items={summary.os} />
+          </Card>
+        </LockedFeature>
       </div>
     </div>
   );

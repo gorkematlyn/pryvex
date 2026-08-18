@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { requireProfile } from "@/lib/domain/current-user";
+import { countUnread } from "@/lib/repo/notifications";
+import { findUserById } from "@/lib/repo/users";
 import { Logo } from "@/components/ui/logo";
 import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
 import { Topbar } from "@/components/dashboard/topbar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { profile } = await requireProfile();
+  const { profile, userId } = await requireProfile();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+  const [unreadCount, user] = await Promise.all([countUnread(userId), findUserById(userId)]);
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
   return (
     <div className="flex min-h-screen bg-shadow">
@@ -35,7 +40,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <Logo markOnly className="text-lg" />
             </span>
           </div>
-          <Topbar username={profile.username} appUrl={appUrl} />
+          <Topbar
+            username={profile.username}
+            appUrl={appUrl}
+            unreadCount={unreadCount}
+            isAdmin={isAdmin}
+          />
         </header>
         <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>

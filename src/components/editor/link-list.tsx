@@ -44,7 +44,16 @@ export function LinkList({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    // Explicit id: without one, dnd-kit derives its aria-describedby target
+    // from an incrementing counter that starts over on the client, so SSR
+    // emits DndDescribedBy-0 and hydration expects -1. A fixed id makes both
+    // renders agree.
+    <DndContext
+      id="link-editor-dnd"
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
       <SortableContext items={links.map((l) => l.id)} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col gap-2">
           {links.map((link) => (

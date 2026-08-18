@@ -1,5 +1,5 @@
 import { query, queryOne, withTransaction } from "@/lib/db/pool";
-import type { UserRow, AuthTokenRow, ProfileRow } from "@/lib/db/types";
+import type { UserRow, AuthTokenRow, ProfileRow, UserRole } from "@/lib/db/types";
 import { hashToken } from "@/lib/auth/tokens";
 
 export function findUserByEmail(email: string): Promise<UserRow | null> {
@@ -10,16 +10,27 @@ export function findUserById(id: string): Promise<UserRow | null> {
   return queryOne<UserRow>("select * from users where id = $1", [id]);
 }
 
-/** Creates the user + profile + primary bio page + settings row atomically, mirroring what the old Supabase trigger did. */
+/**
+ * Creates the user + profile + primary bio page + settings row + opening
+ * subscription atomically. The subscription is part of the same
+ * transaction because an account without one has no entitlements at all,
+ * so a half-completed signup would leave a user who cannot use anything.
+ */
 export async function createUserWithProfile(input: {
   email: string;
   passwordHash: string;
   username: string;
+  role?: UserRole;
+  emailVerified?: boolean;
+  planId: string;
+  planDurationDays: number | null;
 }): Promise<{ user: UserRow; profile: ProfileRow }> {
   return withTransaction(async (client) => {
     const { rows: userRows } = await client.query<UserRow>(
-      "insert into users (email, password_hash) values ($1, $2) returning *",
-      [input.email, input.passwordHash],
+      `insert into users (email, password_hash, role, email_verified_at)
+       values ($1, $2, $3, case when $4::boolean then now() else null end)
+       returning *`,
+      [input.email, input.passwordHash, input.role ?? "user", input.emailVerified ?? false],
     );
     const user = userRows[0];
 
@@ -35,6 +46,16 @@ export async function createUserWithProfile(input: {
     );
 
     await client.query("insert into user_settings (profile_id) values ($1)", [profile.id]);
+
+    const expiresAt =
+      input.planDurationDays && input.planDurationDays > 0
+        ? new Date(Date.now() + input.planDurationDays * 24 * 60 * 60 * 1000).toISOString()
+        : null;
+
+    await client.query(
+      "insert into subscriptions (user_id, plan_id, status, expires_at, source) values ($1, $2, 'active', $3, 'signup')",
+      [user.id, input.planId, expiresAt],
+    );
 
     return { user, profile };
   });

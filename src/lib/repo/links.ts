@@ -98,3 +98,12 @@ export async function reorderLinks(profileId: string, orderedIds: string[]): Pro
     ),
   );
 }
+
+/** Used by plan-limit checks before creating another link. */
+export async function countLinksForProfile(profileId: string): Promise<number> {
+  const row = await queryOne<{ count: string }>(
+    "select count(*)::text as count from links where profile_id = $1",
+    [profileId],
+  );
+  return Number(row?.count ?? 0);
+}

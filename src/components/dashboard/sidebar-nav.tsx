@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { href: "/dashboard/analytics", label: "Analytics", icon: ChartIcon },
   { href: "/dashboard/links", label: "Short Links", icon: ScissorsIcon },
   { href: "/dashboard/qr", label: "QR Codes", icon: QrIcon },
+  { href: "/dashboard/billing", label: "Plan", icon: SparkIcon },
+  { href: "/dashboard/support", label: "Support", icon: LifebuoyIcon },
   { href: "/dashboard/settings", label: "Settings", icon: GearIcon },
 ];
 
@@ -82,6 +84,29 @@ function QrIcon({ className }: { className?: string }) {
       <rect x="3" y="14" width="7" height="7" rx="1" />
       <path d="M14 14h3v3h-3z" />
       <path d="M20 17h1v4h-4v-1" />
+    </svg>
+  );
+}
+function SparkIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <path d="M12 3v4" />
+      <path d="M12 17v4" />
+      <path d="M3 12h4" />
+      <path d="M17 12h4" />
+      <path d="M12 8.5 14 12l-2 3.5L10 12z" />
+    </svg>
+  );
+}
+function LifebuoyIcon({ className }: { className?: string }) {
+  return (
+    <svg {...iconProps(className)}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="m5.6 5.6 3.9 3.9" />
+      <path d="m14.5 14.5 3.9 3.9" />
+      <path d="m18.4 5.6-3.9 3.9" />
+      <path d="m9.5 14.5-3.9 3.9" />
     </svg>
   );
 }

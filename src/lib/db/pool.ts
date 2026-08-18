@@ -9,6 +9,14 @@ const TIMESTAMPTZ_OID = 1184;
 types.setTypeParser(TIMESTAMP_OID, (value: string) => new Date(`${value}Z`).toISOString());
 types.setTypeParser(TIMESTAMPTZ_OID, (value: string) => new Date(value).toISOString());
 
+// pg returns numeric/decimal as a string to preserve arbitrary precision.
+// The only numerics here are plan/payment prices, which are displayed,
+// compared, and handed to payment gateways as formatted strings — never
+// summed into ledger balances — so a JS number is safe and keeps the row
+// types simple. Revisit if real accounting arithmetic is ever added.
+const NUMERIC_OID = 1700;
+types.setTypeParser(NUMERIC_OID, (value: string) => Number.parseFloat(value));
+
 declare global {
   var __pryvexPool: Pool | undefined;
 }

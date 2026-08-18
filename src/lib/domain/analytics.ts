@@ -24,6 +24,25 @@ export function resolveDateRange(key: DateRangeKey | null): { from: Date; to: Da
   }
 }
 
+/**
+ * Narrows a requested window to what the plan retains.
+ *
+ * Lives here rather than in the page so the `new Date()` call stays out of
+ * a component body, and so the clamp is reusable by any future export or
+ * API surface that must honour the same retention limit.
+ */
+export function clampRangeToRetention(
+  from: Date,
+  retentionDays: number,
+): { from: Date; clamped: boolean } {
+  // 0 or -1 (unlimited) both mean "no floor".
+  if (retentionDays <= 0) return { from, clamped: false };
+
+  const floor = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+  if (floor <= from) return { from, clamped: false };
+  return { from: floor, clamped: true };
+}
+
 export interface AnalyticsSummary {
   totalViews: number;
   uniqueViews: number;

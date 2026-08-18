@@ -36,6 +36,40 @@ or any container platform) alongside a PostgreSQL 14+ instance.
    `NEXT_PUBLIC_APP_URL` to match and redeploy — every tracked URL
    (`/go`, `/s`, OG images, UTM `utm_campaign`, email links) is built from
    that single env var.
+5. **Create the owner account** by visiting `/setup` once. It creates the
+   first `super_admin` (email pre-verified, since a fresh deploy has no
+   mail server yet) and signs you in. The route then returns 404
+   permanently — the check is "does a super_admin exist", so there is no
+   flag to unset and nothing to remember to delete from the deployment.
+   Do this immediately after the first deploy: until an owner exists, the
+   page is reachable by anyone who finds the URL.
+
+## Administration
+
+Everything below is configured from `/admin` after setup, not from
+environment variables:
+
+- **Plans** — `/admin/plans` shows every plan as a column and every
+  gateable capability as a row, so plans are edited by comparison. The
+  seeded **Free** plan is the system fallback: it cannot be deleted or
+  deactivated, because expired and lapsed accounts fall back to its
+  entitlements. Deleting any other plan requires choosing where its
+  subscribers move, and optionally notifies them.
+- **New-account defaults** — `/admin/settings` sets which plan signups
+  land on and for how long (leave the duration empty for no expiry, or
+  set one to give every signup a trial).
+- **Payments** — `/admin/settings` selects one gateway (PayTR, PayPal or
+  Stripe) and stores its credentials in the database. Register the
+  webhook URL shown there in the gateway's own dashboard; without a
+  verifiable webhook signature, payments are never credited. Leave the
+  provider as *Disabled* to run without checkout — admins can still
+  assign paid plans manually.
+- **Users** — `/admin/users` lists accounts with plan and expiry, and
+  supports search, bulk plan assignment, and bulk notifications.
+
+Admin authorization is resolved from the database on every request, so
+demoting someone takes effect immediately even if their session token was
+issued earlier.
 
 ## Local Docker smoke test
 

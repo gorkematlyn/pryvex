@@ -20,10 +20,30 @@ layer for creators and brands, not just a page full of links.
   surfaces: views, clicks, click-through rate, top links, referrers,
   device/browser/OS breakdowns, and — critically — which *channel*
   (bio page, short link, or QR code) drove each click.
+- **Plans & administration** — an admin panel for users, plans, billing,
+  notifications and support tickets, with plan capabilities defined as a
+  feature matrix rather than hardcoded tiers.
 
 That last point is the core idea: a creator distributes one destination
 URL through three different channels, and Pryvex can tell them exactly
 which one is working.
+
+## Plans and entitlements
+
+What a plan includes is data, not code branches. Every gateable
+capability is declared once in `src/lib/domain/features.ts`; a plan
+stores only which of them it grants plus its numeric caps. Adding a plan
+is a row, and adding a capability is one entry in that registry — never a
+migration.
+
+The admin panel edits every plan side by side as columns so tiers are
+built by comparison, and the same registry renders the user-facing
+comparison table, so the two can never drift apart.
+
+Capabilities a plan doesn't grant stay **visible but locked** in the
+dashboard rather than hidden, so people can see what the product does.
+That treatment is presentation only — every gated action is independently
+enforced in its Server Action, and limits are re-counted at write time.
 
 ## How tracking works
 
@@ -57,10 +77,13 @@ src/
     (auth)/            login, signup, forgot/reset password
     auth/               email verification + sign-out route handlers
     dashboard/          authenticated shell: editor, analytics, links, qr, settings
+    admin/              users, plans matrix, tickets, notifications, settings
+    setup/              one-time owner-account creation (self-disabling)
     [username]/         public bio page (SSR, minimal JS)
     go/[linkId]/        tracked link-in-bio redirect
     s/[slug]/           tracked short-link redirect
     api/og/[username]/  dynamic Open Graph image
+    api/payments/       gateway webhook
   components/
     ui/                 buttons, inputs, cards, the Pryvex logo/X-mark
     editor/              drag-and-drop link editor
@@ -71,7 +94,9 @@ src/
     db/                  Postgres connection pool + row types
     repo/                 one module per table — the only code that writes SQL
     auth/                  password hashing, sessions, one-time tokens, mailer
-    domain/                URL validation, UTM building, tracking, analytics aggregation
+    domain/                URL validation, UTM building, tracking, analytics,
+                            feature registry + entitlement resolution
+    payments/              one adapter per gateway behind a shared interface
 migrations/                plain SQL schema, applied in order
 ```
 
@@ -84,9 +109,10 @@ npm run db:migrate
 npm run dev
 ```
 
-Sign up at `/signup`. If SMTP isn't configured, the verification link is
-printed to the terminal instead of emailed. Your public profile is live
-immediately at `/{username}`.
+Then visit `/setup` once to create the owner account — it signs you in and
+the route disables itself for good. Regular accounts sign up at `/signup`;
+if SMTP isn't configured, the verification link is printed to the terminal
+instead of emailed. A public profile is live immediately at `/{username}`.
 
 Deployment instructions live in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 

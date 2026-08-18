@@ -35,3 +35,12 @@ export async function toggleShortLink(id: string, profileId: string, isActive: b
 export async function deleteShortLink(id: string, profileId: string): Promise<void> {
   await query("delete from short_links where id = $1 and profile_id = $2", [id, profileId]);
 }
+
+/** Used by plan-limit checks before creating another short link. */
+export async function countShortLinksForProfile(profileId: string): Promise<number> {
+  const row = await queryOne<{ count: string }>(
+    "select count(*)::text as count from short_links where profile_id = $1",
+    [profileId],
+  );
+  return Number(row?.count ?? 0);
+}
